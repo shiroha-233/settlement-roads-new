@@ -33,4 +33,7 @@ public class ModConfig extends MidnightConfig {
 
     @Entry(category = "roads", min = 2, max = 10)
     public static int maxTerrainStability = 4;
+
+    @Entry(category = "pre-generation", min = 1, max = 10)
+    public static int maxConcurrentRoadGeneration = 3;
 }

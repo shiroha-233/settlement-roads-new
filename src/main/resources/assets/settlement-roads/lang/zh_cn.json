@@ -35,6 +35,9 @@
   "settlement-roads.midnightconfig.maxTerrainStability": "地形稳定性检查",
   "settlement-roads.midnightconfig.maxTerrainStability.tooltip": "地形稳定性阈值。数值越大越容易通过崎岖地形。默认：4",
 
+  "settlement-roads.midnightconfig.maxConcurrentRoadGeneration": "同时生成道路数量上限",
+  "settlement-roads.midnightconfig.maxConcurrentRoadGeneration.tooltip": "同时生成的道路任务数量上限。数值越小性能占用越低，但道路生成速度会变慢。默认：3",
+
   "key.settlementroads.debug_map": "打开调试地图",
   "category.settlementroads": "聚落道路",
 

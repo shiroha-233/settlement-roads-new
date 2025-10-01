@@ -28,6 +28,9 @@
   "settlement-roads.midnightconfig.maxTerrainStability": "Terrain Stability Check",
   "settlement-roads.midnightconfig.maxTerrainStability.tooltip": "Terrain stability threshold. Higher values allow rougher terrain. Default: 4",
 
+  "settlement-roads.midnightconfig.maxConcurrentRoadGeneration": "Max Concurrent Road Generation",
+  "settlement-roads.midnightconfig.maxConcurrentRoadGeneration.tooltip": "Maximum number of roads that can be generated simultaneously. Lower values reduce performance impact but slow down road generation. Default: 3",
+
   "settlement-roads.midnightconfig.title":"Countered's Settlement Roads",
 
   "key.settlementroads.debug_map": "Open Debug Map",

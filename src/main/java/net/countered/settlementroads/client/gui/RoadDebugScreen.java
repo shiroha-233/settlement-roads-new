@@ -64,9 +64,8 @@ public class RoadDebugScreen extends Screen {
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         computeLayout();
 
-        // 背景面板
-        ctx.fill(PADDING, PADDING, width - PADDING, height - PADDING, 0xA0101010);
-        ctx.drawBorder(PADDING, PADDING, width - 2 * PADDING, height - 2 * PADDING, 0xFFFFFFFF);
+        // 绘制主背景面板 - 深色半透明
+        drawPanel(ctx, PADDING, PADDING, width - PADDING, height - PADDING, 0xE0101010, 0xFF2C2C2C);
 
         // 绘制网格
         drawGrid(ctx);
@@ -85,49 +84,50 @@ public class RoadDebugScreen extends Screen {
             ScreenPos b = screenPositions.get(conn.to());
             if (a == null || b == null) continue;
             
-            // 根据状态选择颜色
+            // 根据状态选择颜色 - 使用更鲜艳的颜色
             int color = switch (conn.status()) {
-                case PLANNED -> statusColors.get("planned");
-                case GENERATING -> statusColors.get("generating");
+                case PLANNED -> 0xFFFFD700; // 金黄色
+                case GENERATING -> 0xFFFF8C00; // 深橙色
                 case COMPLETED -> statusColors.get("completed");
-                case FAILED -> statusColors.get("failed");
+                case FAILED -> 0xFFFF4444; // 亮红色
             };
             
             drawLine(ctx, a.x, a.y, b.x, b.y, color);
         }
 
-        // 绘制结构节点
+        // 绘制结构节点 - 更大更明显
         BlockPos hovered = null;
         for (BlockPos pos : structures) {
             ScreenPos p = screenPositions.get(pos);
             if (p == null) continue;
             
-            fillCircle(ctx, p.x, p.y, RADIUS, statusColors.get("structure"));
-            drawCircleOutline(ctx, p.x, p.y, RADIUS, 0xFF000000);
+            // 外圈发光效果
+            fillCircle(ctx, p.x, p.y, RADIUS + 2, 0x40FFFFFF);
+            // 主体
+            fillCircle(ctx, p.x, p.y, RADIUS, 0xFF2ECC71);
+            // 高光
+            fillCircle(ctx, p.x - 1, p.y - 1, 2, 0x8CFFFFFF);
+            // 边框
+            drawCircleOutline(ctx, p.x, p.y, RADIUS, 0xFF1E8449);
 
-            if (dist2(p.x, p.y, mouseX, mouseY) <= RADIUS * RADIUS) {
+            if (dist2(p.x, p.y, mouseX, mouseY) <= (RADIUS + 2) * (RADIUS + 2)) {
                 hovered = pos;
             }
-        }
-
-        // 显示悬停提示
-        if (hovered != null) {
-            TextRenderer font = MinecraftClient.getInstance().textRenderer;
-            ctx.drawTooltip(font, Text.literal(hovered.toShortString()), mouseX, mouseY);
         }
 
         // 绘制玩家位置
         drawPlayerMarker(ctx);
 
-        // 绘制比例尺和图例
-        drawScale(ctx);
-        drawLegend(ctx);
+        // 绘制UI元素
+        drawTitle(ctx);
+        drawStatsPanel(ctx);
+        drawLegendPanel(ctx);
+        drawScalePanel(ctx);
 
-        // 绘制标题
-        drawCenteredTitle(ctx);
-
-        // 绘制统计信息
-        drawStats(ctx);
+        // 显示悬停提示 - 放在最后确保在最上层
+        if (hovered != null) {
+            drawTooltip(ctx, hovered, mouseX, mouseY);
+        }
 
         super.render(ctx, mouseX, mouseY, delta);
     }
@@ -209,19 +209,26 @@ public class RoadDebugScreen extends Screen {
         return true;
     }
 
-    private void drawCenteredTitle(DrawContext ctx) {
+    // 绘制标题栏
+    private void drawTitle(DrawContext ctx) {
         TextRenderer font = MinecraftClient.getInstance().textRenderer;
         Text title = Text.translatable("gui.settlementroads.debug_map.title");
         int tw = font.getWidth(title);
-        ctx.drawText(font, title, (width - tw) / 2, PADDING - 12, 0xFFFFFFFF, true);
+        int x = (width - tw) / 2;
+        int y = PADDING + 8;
+        
+        // 标题背景面板
+        drawPanel(ctx, x - 10, y - 5, x + tw + 10, y + 14, 0xC0000000, 0xFF4A90E2);
+        
+        // 绘制标题文本 - 带阴影
+        ctx.drawText(font, title, x, y, 0xFFFFFFFF, true);
     }
 
-    private void drawStats(DrawContext ctx) {
+    // 绘制统计面板 - 右上角
+    private void drawStatsPanel(DrawContext ctx) {
         TextRenderer font = MinecraftClient.getInstance().textRenderer;
-        int x = width - PADDING - 150;
-        int y = PADDING + 5;
         
-        // 统计各状态的连接数（避免 ConcurrentModificationException）
+        // 统计各状态的连接数
         int planned = 0;
         int generating = 0;
         int completed = 0;
@@ -235,13 +242,51 @@ public class RoadDebugScreen extends Screen {
             }
         }
         
-        ctx.drawText(font, Text.translatable("gui.settlementroads.debug_map.structures", structures.size()), x, y, 0xFFFFFFFF, true);
-        ctx.drawText(font, Text.translatable("gui.settlementroads.debug_map.planned", planned), x, y + 12, statusColors.get("planned"), true);
-        ctx.drawText(font, Text.translatable("gui.settlementroads.debug_map.generating", generating), x, y + 24, statusColors.get("generating"), true);
-        ctx.drawText(font, Text.translatable("gui.settlementroads.debug_map.completed", completed), x, y + 36, statusColors.get("completed"), true);
-        ctx.drawText(font, Text.translatable("gui.settlementroads.debug_map.failed", failed), x, y + 48, statusColors.get("failed"), true);
-        ctx.drawText(font, Text.translatable("gui.settlementroads.debug_map.roads", roads.size()), x, y + 60, statusColors.get("road"), true);
-        ctx.drawText(font, Text.translatable("gui.settlementroads.debug_map.zoom", String.format("%.1f", zoom)), x, y + 72, 0xFFFFFFFF, true);
+        // 准备显示文本
+        String[] labels = {
+            "结构: " + structures.size(),
+            "计划中: " + planned,
+            "生成中: " + generating,
+            "已完成: " + completed,
+            "失败: " + failed,
+            "道路: " + roads.size(),
+            "缩放: " + String.format("%.1fx", zoom)
+        };
+        
+        int[] colors = {
+            0xFFFFFFFF,
+            0xFFFFD700, // 金黄色
+            0xFFFF8C00, // 深橙色
+            0xFF2ECC71, // 绿色
+            0xFFFF4444, // 红色
+            0xFF3498DB, // 蓝色
+            0xFFBDC3C7  // 灰色
+        };
+        
+        // 计算面板大小
+        int maxWidth = 0;
+        for (String label : labels) {
+            maxWidth = Math.max(maxWidth, font.getWidth(label));
+        }
+        
+        int panelWidth = maxWidth + 20;
+        int panelHeight = labels.length * 14 + 10;
+        int x = width - PADDING - panelWidth - 5;
+        int y = PADDING + 30;
+        
+        // 绘制面板背景
+        drawPanel(ctx, x, y, x + panelWidth, y + panelHeight, 0xD0000000, 0xFF34495E);
+        
+        // 绘制文本
+        int textY = y + 5;
+        for (int i = 0; i < labels.length; i++) {
+            // 图标指示器
+            ctx.fill(x + 5, textY + 2, x + 10, textY + 7, colors[i]);
+            ctx.drawBorder(x + 5, textY + 2, 5, 5, 0x80FFFFFF);
+            // 文本
+            ctx.drawText(font, labels[i], x + 13, textY, colors[i], true);
+            textY += 14;
+        }
     }
 
     private void drawGrid(DrawContext ctx) {
@@ -273,50 +318,81 @@ public class RoadDebugScreen extends Screen {
         }
     }
 
-    private void drawScale(DrawContext ctx) {
+    // 绘制比例尺面板 - 右下角
+    private void drawScalePanel(DrawContext ctx) {
+        TextRenderer font = MinecraftClient.getInstance().textRenderer;
         int spacing = computeGridSpacing();
         int lengthPx = (int) (spacing * baseScale * zoom);
-        int x = width - PADDING - lengthPx - 10;
-        int y = height - PADDING - 20;
-
-        fillH(ctx, x, x + lengthPx, y, 0xFFFFFFFF);
-        fillV(ctx, x, y - 3, y + 3, 0xFFFFFFFF);
-        fillV(ctx, x + lengthPx, y - 3, y + 3, 0xFFFFFFFF);
-        drawSmallLabel(ctx, Text.translatable("gui.settlementroads.debug_map.blocks", spacing).getString(), x, y - 12);
+        
+        String text = spacing + " 方块";
+        int textWidth = font.getWidth(text);
+        int panelWidth = Math.max(lengthPx + 20, textWidth + 20);
+        int panelHeight = 35;
+        
+        int x = width - PADDING - panelWidth - 5;
+        int y = height - PADDING - panelHeight - 5;
+        
+        // 绘制面板背景
+        drawPanel(ctx, x, y, x + panelWidth, y + panelHeight, 0xD0000000, 0xFF34495E);
+        
+        // 绘制比例尺
+        int scaleX = x + (panelWidth - lengthPx) / 2;
+        int scaleY = y + panelHeight - 10;
+        
+        // 比例尺线
+        fillH(ctx, scaleX, scaleX + lengthPx, scaleY, 0xFFFFFFFF);
+        fillV(ctx, scaleX, scaleY - 4, scaleY + 4, 0xFFFFFFFF);
+        fillV(ctx, scaleX + lengthPx, scaleY - 4, scaleY + 4, 0xFFFFFFFF);
+        
+        // 文本
+        ctx.drawText(font, text, x + (panelWidth - textWidth) / 2, y + 8, 0xFFFFFFFF, true);
     }
 
-    private void drawLegend(DrawContext ctx) {
+    // 绘制图例面板 - 左上角
+    private void drawLegendPanel(DrawContext ctx) {
+        TextRenderer font = MinecraftClient.getInstance().textRenderer;
+        
+        String[] labels = {
+            "结构",
+            "计划中",
+            "生成中",
+            "失败",
+            "道路"
+        };
+        
+        int[] colors = {
+            0xFF2ECC71, // 绿色
+            0xFFFFD700, // 金黄色
+            0xFFFF8C00, // 深橙色
+            0xFFFF4444, // 红色
+            0xFF3498DB  // 蓝色
+        };
+        
+        // 计算面板大小
+        int maxWidth = 0;
+        for (String label : labels) {
+            maxWidth = Math.max(maxWidth, font.getWidth(label));
+        }
+        
+        int panelWidth = maxWidth + 30;
+        int panelHeight = labels.length * 16 + 10;
         int x = PADDING + 5;
-        int y = PADDING + 5;
+        int y = PADDING + 30;
         
-        // 结构
-        ctx.fill(x, y, x + 10, y + 10, statusColors.get("structure"));
-        ctx.drawBorder(x, y, 10, 10, 0xFFFFFFFF);
-        drawSmallLabel(ctx, Text.translatable("gui.settlementroads.debug_map.legend.structures").getString(), x + 15, y + 1);
+        // 绘制面板背景
+        drawPanel(ctx, x, y, x + panelWidth, y + panelHeight, 0xD0000000, 0xFF34495E);
         
-        // 计划中
-        y += 15;
-        ctx.fill(x, y, x + 10, y + 10, statusColors.get("planned"));
-        ctx.drawBorder(x, y, 10, 10, 0xFFFFFFFF);
-        drawSmallLabel(ctx, Text.translatable("gui.settlementroads.debug_map.legend.planned").getString(), x + 15, y + 1);
-        
-        // 生成中
-        y += 15;
-        ctx.fill(x, y, x + 10, y + 10, statusColors.get("generating"));
-        ctx.drawBorder(x, y, 10, 10, 0xFFFFFFFF);
-        drawSmallLabel(ctx, Text.translatable("gui.settlementroads.debug_map.legend.generating").getString(), x + 15, y + 1);
-        
-        // 失败
-        y += 15;
-        ctx.fill(x, y, x + 10, y + 10, statusColors.get("failed"));
-        ctx.drawBorder(x, y, 10, 10, 0xFFFFFFFF);
-        drawSmallLabel(ctx, Text.translatable("gui.settlementroads.debug_map.legend.failed").getString(), x + 15, y + 1);
-        
-        // 道路
-        y += 15;
-        ctx.fill(x, y, x + 10, y + 10, statusColors.get("road"));
-        ctx.drawBorder(x, y, 10, 10, 0xFFFFFFFF);
-        drawSmallLabel(ctx, Text.translatable("gui.settlementroads.debug_map.legend.roads").getString(), x + 15, y + 1);
+        // 绘制图例项
+        int itemY = y + 5;
+        for (int i = 0; i < labels.length; i++) {
+            // 颜色指示器 - 圆形
+            fillCircle(ctx, x + 10, itemY + 4, 4, colors[i]);
+            drawCircleOutline(ctx, x + 10, itemY + 4, 4, 0x80FFFFFF);
+            
+            // 文本
+            ctx.drawText(font, labels[i], x + 20, itemY, 0xFFFFFFFF, true);
+            itemY += 16;
+        }
     }
 
     private void computeLayout() {
@@ -422,6 +498,52 @@ public class RoadDebugScreen extends Screen {
     private void drawSmallLabel(DrawContext ctx, String s, int x, int y) {
         TextRenderer font = MinecraftClient.getInstance().textRenderer;
         ctx.drawText(font, Text.literal(s), x, y, 0xFFFFFFFF, true);
+    }
+
+    // 绘制美化的面板
+    private void drawPanel(DrawContext ctx, int x1, int y1, int x2, int y2, int bgColor, int borderColor) {
+        // 背景
+        ctx.fill(x1, y1, x2, y2, bgColor);
+        // 边框
+        ctx.drawBorder(x1, y1, x2 - x1, y2 - y1, borderColor);
+        // 内部高光
+        ctx.drawHorizontalLine(x1 + 1, x2 - 2, y1 + 1, 0x40FFFFFF);
+        ctx.drawVerticalLine(x1 + 1, y1 + 1, y2 - 2, 0x40FFFFFF);
+    }
+
+    // 绘制美化的工具提示
+    private void drawTooltip(DrawContext ctx, BlockPos pos, int mouseX, int mouseY) {
+        TextRenderer font = MinecraftClient.getInstance().textRenderer;
+        
+        String[] lines = {
+            "坐标: " + pos.getX() + ", " + pos.getZ(),
+            "高度: Y " + pos.getY(),
+            "点击传送"
+        };
+        
+        int maxWidth = 0;
+        for (String line : lines) {
+            maxWidth = Math.max(maxWidth, font.getWidth(line));
+        }
+        
+        int tooltipWidth = maxWidth + 12;
+        int tooltipHeight = lines.length * 11 + 6;
+        
+        // 调整位置避免超出屏幕
+        int tx = mouseX + 10;
+        int ty = mouseY + 10;
+        if (tx + tooltipWidth > width - 5) tx = mouseX - tooltipWidth - 10;
+        if (ty + tooltipHeight > height - 5) ty = mouseY - tooltipHeight - 10;
+        
+        // 绘制工具提示背景
+        drawPanel(ctx, tx, ty, tx + tooltipWidth, ty + tooltipHeight, 0xF0000000, 0xFF4A90E2);
+        
+        // 绘制文本
+        int textY = ty + 3;
+        for (String line : lines) {
+            ctx.drawText(font, line, tx + 6, textY, 0xFFFFFFFF, false);
+            textY += 11;
+        }
     }
 
     // ========== 绘图原语 ==========
