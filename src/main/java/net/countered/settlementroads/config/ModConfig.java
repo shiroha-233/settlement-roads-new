@@ -4,27 +4,33 @@ import eu.midnightdust.lib.config.MidnightConfig;
 
 public class ModConfig extends MidnightConfig {
 
-    @Entry(category = "structures", name = "Maximum Number of structures to locate")
+    @Entry(category = "structures")
     public static int maxLocatingCount = 100;
 
-    @Entry(category = "structures", name = "Structure to locate")
+    @Entry(category = "structures")
     public static String structureToLocate = "#minecraft:village";
 
-    @Entry(category = "pre-generation", name = "Number of structures to locate on world load")
+    @Entry(category = "pre-generation")
     public static int initialLocatingCount = 7;
 
-    @Entry(category = "roads", name = "Distance between buoys")
+    @Entry(category = "roads")
     public static int distanceBetweenBuoys = 25;
 
-    @Entry(category = "roads", name = "Artificial road averaging")
+    @Entry(category = "roads")
     public static int averagingRadius = 1;
 
-    @Entry(category = "roads", name = "Allow artificial roads")
+    @Entry(category = "roads")
     public static boolean allowArtificial = true;
 
-    @Entry(category = "roads", name = "Allow natural roads")
+    @Entry(category = "roads")
     public static boolean allowNatural = true;
 
-    @Entry(category = "roads", name = "Place waypoints instead of roads")
+    @Entry(category = "roads")
     public static boolean placeWaypoints = false;
+
+    @Entry(category = "roads", min = 3, max = 10)
+    public static int maxHeightDifference = 5;
+
+    @Entry(category = "roads", min = 2, max = 10)
+    public static int maxTerrainStability = 4;
 }

@@ -1,6 +1,7 @@
 package net.countered.settlementroads.features.roadlogic;
 
 import net.countered.settlementroads.SettlementRoads;
+import net.countered.settlementroads.config.ModConfig;
 import net.countered.settlementroads.helpers.Records;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.BiomeTags;
@@ -80,13 +81,13 @@ public class RoadPathCalculator {
                         || biomeRegistryEntry.isIn(BiomeTags.IS_OCEAN)
                         || biomeRegistryEntry.isIn(BiomeTags.IS_DEEP_OCEAN) ? 50 : 0;
                 int elevation = Math.abs(y - current.pos.getY());
-                if (elevation > 3) {
+                if (elevation > ModConfig.maxHeightDifference) {
                     continue;
                 }
                 int offsetSum = Math.abs(Math.abs(offset[0])) + Math.abs(offset[1]);
                 double stepCost = (offsetSum == 2 * neighborDistance) ? 1.5 : 1;
                 int terrainStabilityCost = calculateTerrainStability(neighborPos, y, serverWorld);
-                if (terrainStabilityCost > 2) {
+                if (terrainStabilityCost > ModConfig.maxTerrainStability) {
                     continue;
                 }
                 int yLevelCost = y == 62 ? 20 : 0;
