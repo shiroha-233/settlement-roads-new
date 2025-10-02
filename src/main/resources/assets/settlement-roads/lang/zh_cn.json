@@ -13,9 +13,6 @@
   
   "settlement-roads.midnightconfig.structureToLocate": "要定位的结构",
   "settlement-roads.midnightconfig.structureToLocate.tooltip": "选择或输入要定位的结构。例如：#minecraft:village（村庄标签）, minecraft:village_plains（平原村庄）或 modid:custom_structure（模组结构）。支持结构标签和键。",
-
-  "settlement-roads.midnightconfig.distanceBetweenBuoys": "浮标之间的距离",
-  "settlement-roads.midnightconfig.distanceBetweenBuoys.tooltip": "水面浮标之间的大致距离（方块）。默认：25",
   
   "settlement-roads.midnightconfig.averagingRadius": "地形平均半径",
   "settlement-roads.midnightconfig.averagingRadius.tooltip": "人工道路的地形平滑程度。数值越大越平滑，但可能不自然。默认：1",

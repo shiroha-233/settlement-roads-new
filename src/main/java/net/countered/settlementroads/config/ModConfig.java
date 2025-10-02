@@ -14,9 +14,6 @@ public class ModConfig extends MidnightConfig {
     public static int initialLocatingCount = 7;
 
     @Entry(category = "roads")
-    public static int distanceBetweenBuoys = 25;
-
-    @Entry(category = "roads")
     public static int averagingRadius = 1;
 
     @Entry(category = "roads")

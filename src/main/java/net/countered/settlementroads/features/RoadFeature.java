@@ -146,12 +146,7 @@ public class RoadFeature extends Feature<RoadFeatureConfig> {
                                BlockPos placePos, int segmentIndex, BlockPos nextPos, BlockPos prevPos, List<BlockPos> middleBlockPositions, int roadType, Random random) {
         BlockPos surfacePos = placePos.withY(structureWorldAccess.getTopY(Heightmap.Type.WORLD_SURFACE_WG, placePos.getX(), placePos.getZ()));
         BlockState blockStateAtPos = structureWorldAccess.getBlockState(surfacePos.down());
-        if (blockStateAtPos.equals(Blocks.WATER.getDefaultState())) {
-            // If it's water, place a buoy
-            if (segmentIndex % (ModConfig.distanceBetweenBuoys) == 0) {
-                RoadStructures.placeBuoy(structureWorldAccess, surfacePos);
-            }
-        }
+        // Water surface handling is now done in placeOnSurface method
         if (ModConfig.placeWaypoints) {
             if (segmentIndex % 25 == 0) {
                 roadDecorationPlacementPositions.add(new FenceWaypointDecoration(surfacePos, structureWorldAccess));
@@ -194,7 +189,15 @@ public class RoadFeature extends Feature<RoadFeatureConfig> {
         if (natural == 1 || ModConfig.averagingRadius == 0) {
             surfacePos = structureWorldAccess.getTopPosition(Heightmap.Type.WORLD_SURFACE_WG, placePos);
         }
-        BlockState blockStateAtPos = structureWorldAccess.getBlockState(structureWorldAccess.getTopPosition(Heightmap.Type.WORLD_SURFACE_WG, surfacePos).down());
+        BlockPos topPos = structureWorldAccess.getTopPosition(Heightmap.Type.WORLD_SURFACE_WG, surfacePos);
+        BlockState blockStateAtPos = structureWorldAccess.getBlockState(topPos.down());
+        
+        // Check if this is water surface - place unlit campfire instead of regular road
+        if (blockStateAtPos.equals(Blocks.WATER.getDefaultState())) {
+            structureWorldAccess.setBlockState(topPos, Blocks.CAMPFIRE.getDefaultState().with(net.minecraft.state.property.Properties.LIT, false), 3);
+            return;
+        }
+        
         // place road
         if (natural == 0 || random.nextDouble() < naturalBlockChance) {
             placeRoadBlock(structureWorldAccess, blockStateAtPos, surfacePos, material, random);

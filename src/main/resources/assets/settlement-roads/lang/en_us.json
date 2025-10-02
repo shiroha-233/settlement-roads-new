@@ -11,8 +11,6 @@
   "settlement-roads.midnightconfig.structureToLocate": "Structure to locate",
   "settlement-roads.midnightconfig.structureToLocate.tooltip": "Select or type the structure you want to locate. E.g., #minecraft:village, minecraft:village_plains or modid:custom_structure. Allows structure tags and keys.",
 
-  "settlement-roads.midnightconfig.distanceBetweenBuoys": "Distance between buoys",
-  "settlement-roads.midnightconfig.distanceBetweenBuoys.tooltip": "Approximate distance between buoys in blocks",
   "settlement-roads.midnightconfig.averagingRadius": "Averaging radius",
   "settlement-roads.midnightconfig.averagingRadius.tooltip": "Amount of terrain averaging done for artificial roads",
   "settlement-roads.midnightconfig.allowArtificial": "Allow artificial roads",
